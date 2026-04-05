@@ -40,7 +40,7 @@ public class AuthService {
             User user = userOptional.get();
             // Use passwordEncoder.matches for security best practice
             if (passwordEncoder.matches(password, user.getPassword())) {
-                return new LoginResponseDto("Login successful", user.getId(), user.getEmail(), user.getRole().name());
+                return new LoginResponseDto("Login successful", user.getId(), user.getEmail(), user.getRole().name(), user.getName());
             }
         }
         return "Invalid email or password";

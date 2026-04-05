@@ -9,5 +9,6 @@ public class LoginResponseDto {
     private String message;
     private Long userId;
     private String email;
-    private String role;  // TASK 3: include role in login response
+    private String role;
+    private String name;
 }

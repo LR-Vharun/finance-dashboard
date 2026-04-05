@@ -42,13 +42,13 @@
     </div>
 
     <!-- Notice for non-PRO users -->
-    <div id="user-notice" class="hidden" style="margin-top:2rem; padding:1.5rem; background:#1e293b; border-radius:12px; border:1px solid #334155;">
-      <p style="color:#94a3b8; font-size:0.95rem;">
-        You are currently on a standard <strong>USER</strong> account. <br/><br/>
+    <div id="user-notice" class="info-card hidden">
+      <p>
+        You are currently on a standard <strong>USER</strong> account. 
         Financial summaries are only available for <strong>USER_PRO</strong> members. 
-        Please navigate to your <strong>Transactions</strong> to manage your history.
+        Please navigate to your transactions to manage your personal history.
       </p>
-      <a href="transactions.html" class="btn" style="display:inline-block; margin-top:1rem; text-decoration:none;">View Transactions</a>
+      <a href="transactions.html" class="btn btn-sm">View Transactions</a>
     </div>
   </div>
 
@@ -58,7 +58,7 @@
     if (!user) location.href = 'index.html';
 
     setupNav('dashboard');
-    document.getElementById('welcome-msg').textContent = `Welcome back, ${user.email}`;
+    document.getElementById('welcome-msg').textContent = `Welcome back, ${user.name}`;
 
     // ── Role-based UI visibility ───────────────────────────────
     if (user.role === 'USER_PRO' || user.role === 'ADMIN') {
