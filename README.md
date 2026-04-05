@@ -7,7 +7,7 @@ The system is pre-populated with 5 Demo Users and 40 Transactions defined in `sr
 
 Every time the application starts for the first time on a new PC:
 1.  Spring Boot automatically creates the `users` and `transactions` tables.
-2.  It then reads the `data.sql` and inserts the demo data.
+2.  It then reads the `data.sql` and inserts required demo data.
 3.  On subsequent restarts, it uses `INSERT IGNORE` so duplicate records are skipped.
 
 ---
@@ -15,40 +15,39 @@ Every time the application starts for the first time on a new PC:
 ## Setup Instructions (For Testers)
 
 ### 1. Prerequisites
-- **Java 21** and **Maven** installed.
-- **MySQL** installed and running.
-- **Note on Lombok**: If you are using an IDE (like VS Code or IntelliJ), please ensure the **Lombok extension/plugin** is installed to avoid errors in the editor. (Not required just to run the application through terminal).
+- **Java 21** and **Maven** installed and configured in your PATH.
+- **MySQL** installed and running on port 3306.
+- **Lombok Note**: If you plan to open this in an IDE (VS Code or IntelliJ), please ensure the **Lombok Extension** is installed. Without it, the IDE will show internal code errors, although the application will still run perfectly via the command line.
 
 ### 2. Prepare the Database
-1.  Run this single command in your MySQL console:
+1.  Run the following command in your MySQL console:
     ```sql
     CREATE DATABASE finance_db;
     ```
-2.  **Credentials**: By default, the app connects using **username: root** and **no password**. If your setup is different, please update the credentials in `src/main/resources/application.properties`.
+2.  **Database Credentials**: The default configuration (in `src/main/resources/application.properties`) uses **username: root** and **no password**.
+    *   If your local MySQL uses different credentials, please update them in the properties file before starting.
+    *   Alternatively, you can set the environment variables `DB_USER` and `DB_PASS`.
 
 ### 3. Start the Application
-Use the provided automation scripts to simplify the startup process:
+Use the provided automation scripts for a one-click startup:
 
-#### On Windows
-1.  Open the project folder.
-2.  Double-click the `start.bat` file, or run it through Command Prompt/PowerShell:
+#### Windows Users
+1.  Navigate to the project folder.
+2.  Double-click `start.bat`, or run from Command Prompt:
     ```cmd
     start.bat
     ```
 
-#### On Linux or macOS
+#### Linux or macOS Users
 1.  Open a terminal in the project folder.
-2.  Grant execution permissions to the script:
+2.  Grant execution permissions:
     ```bash
     chmod +x start.sh
     ```
-3.  Run the script:
+3.  Execute the script:
     ```bash
     ./start.sh
     ```
-
-> [!NOTE]
-> The scripts will wait for MySQL to be ready (up to 60s) before launching the backend.
 
 ---
 
@@ -63,8 +62,7 @@ The following accounts are pre-loaded with transaction history:
 
 ---
 
-## Security Matrix
-Access rules enforced at the backend:
-- **ADMIN**: Full control. Can delete/view any user's history and change roles.
-- **USER_PRO**: Can view their own transactions and financial summary. Cannot delete history.
+## Security Matrix (Backend Rules)
+- **ADMIN**: Full access. Can manage roles and delete/view any user's history.
+- **USER_PRO**: Can view personal transactions and personal summaries. Cannot delete history.
 - **USER**: Can view/create transactions only. Restricted from summaries and deletions.
