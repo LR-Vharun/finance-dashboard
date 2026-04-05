@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Transactions — Finance Dashboard</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <nav>
+    <span class="brand">💰 Finance Dashboard</span>
+    <div class="nav-links">
+      <button id="theme-toggle-btn" class="theme-toggle" onclick="toggleTheme()"></button>
+      <span id="nav-role-badge" class="role-badge"></span>
+      <a href="dashboard.html">Dashboard</a>
+      <a id="nav-transactions" href="transactions.html" class="hidden">Transactions</a>
+      <a id="nav-admin" href="admin.html" class="hidden">Admin Panel</a>
+      <a href="#" onclick="logout()">Logout</a>
+    </div>
+  </nav>
+
+  <div class="page-content">
+    <h2>Transactions</h2>
+    <p class="subtitle">Your personal income and expense records</p>
+
+    <div class="card-sm" style="margin-bottom:1.5rem;">
+      <h3>Add Transaction</h3>
+      <form id="txn-form">
+        <label>Amount (₹)</label>
+        <input type="number" id="amount" min="1" step="0.01" placeholder="e.g. 5000" required />
+        <label>Type</label>
+        <select id="type">
+          <option value="INCOME">INCOME</option>
+          <option value="EXPENSE">EXPENSE</option>
+        </select>
+        <label>Description</label>
+        <input type="text" id="description" placeholder="e.g. Salary" />
+        <label>Date</label>
+        <input type="date" id="date" required />
+        <button type="submit" id="add-btn">Add Transaction</button>
+      </form>
+    </div>
+
+    <p class="section-title">All Your Transactions</p>
+    <table id="txn-table">
+      <thead>
+        <tr>
+          <th>ID</th><th>Amount</th><th>Type</th><th>Description</th><th>Date</th>
+        </tr>
+      </thead>
+      <tbody id="txn-body"></tbody>
+    </table>
+    
+    <p style="font-size:0.75rem; color:#64748b; margin-top:1rem;">
+      ℹ️ Standard accounts cannot delete history. Contact an Administrator for corrections.
+    </p>
+  </div>
+
+  <script src="script.js"></script>
+  <script>
+    const user = getUser();
+    if (!user || user.role === 'ADMIN') {
+      location.href = user ? 'admin.html' : 'index.html';
+    }
+
+    setupNav('transactions');
+    document.getElementById('date').valueAsDate = new Date();
+
+    async function loadTransactions() {
+      const res  = await fetch('/api/transactions', { headers: authHeaders() });
+      const data = await res.json();
+      const tbody = document.getElementById('txn-body');
+      tbody.innerHTML = '';
+      if (!data.length) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#475569;">No transactions yet.</td></tr>';
+        return;
+      }
+      data.forEach(t => {
+        tbody.innerHTML += `
+          <tr>
+            <td>${t.id}</td>
+            <td>₹${Number(t.amount).toFixed(2)}</td>
+            <td><span class="badge ${t.type.toLowerCase()}">${t.type}</span></td>
+            <td>${t.description || '—'}</td>
+            <td>${t.date}</td>
+          </tr>`;
+      });
+    }
+
+    document.getElementById('txn-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('add-btn');
+      btn.disabled = true;
+      btn.textContent = 'Adding…';
+      const body = {
+        amount:      parseFloat(document.getElementById('amount').value),
+        type:        document.getElementById('type').value,
+        description: document.getElementById('description').value,
+        date:        document.getElementById('date').value
+      };
+      const res = await fetch('/api/transactions', {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify(body)
+      });
+      btn.disabled = false;
+      btn.textContent = 'Add Transaction';
+      if (res.ok) {
+        e.target.reset();
+        document.getElementById('date').valueAsDate = new Date();
+        loadTransactions();
+      } else {
+        alert('Failed to add transaction.');
+      }
+    });
+
+    loadTransactions();
+  </script>
+</body>
+</html>

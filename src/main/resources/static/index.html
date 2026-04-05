@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Finance Dashboard — Login</title>
+  <meta name="description" content="Sign in or create an account on Finance Dashboard." />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    /* ── Auth toggle animation ── */
+    .auth-panel { transition: opacity 0.2s ease; }
+    .auth-panel.hidden { display: none !important; }
+
+    .toggle-link {
+      margin-top: 1.2rem;
+      text-align: center;
+      font-size: 0.83rem;
+      color: #64748b;
+    }
+    .toggle-link button {
+      background: none;
+      border: none;
+      color: #38bdf8;
+      font-size: 0.83rem;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 0;
+      margin: 0;
+      text-decoration: underline;
+      transition: color 0.15s;
+    }
+    .toggle-link button:hover { color: #7dd3fc; background: none; transform: none; }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin: 1.2rem 0 0.4rem;
+      color: #334155;
+      font-size: 0.78rem;
+    }
+    .divider::before, .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: #334155;
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <span class="brand">Finance Dashboard</span>
+    <div class="nav-links">
+      <button id="theme-toggle-btn" class="theme-toggle" onclick="toggleTheme()"></button>
+    </div>
+  </nav>
+
+  <div class="login-wrap">
+    <div class="card">
+
+      <!-- ── Brand ── -->
+      <h1>💰 Finance Dashboard</h1>
+
+      <!-- ── Alert messages ── -->
+      <div id="error-msg"   class="error   hidden"></div>
+      <div id="success-msg" class="success hidden"></div>
+
+      <!-- ══════════════════════════════════════════════
+           LOGIN PANEL
+      ══════════════════════════════════════════════ -->
+      <div id="login-panel" class="auth-panel">
+        <p class="subtitle">Sign in to your account</p>
+        <form id="login-form" autocomplete="on">
+          <label for="login-email">Email</label>
+          <input type="email" id="login-email" placeholder="user1@test.com"
+                 required autocomplete="email" />
+
+          <label for="login-password">Password</label>
+          <input type="password" id="login-password" placeholder="••••••"
+                 required autocomplete="current-password" />
+
+          <button type="submit" id="login-btn">Sign In</button>
+        </form>
+
+        <div class="divider">or</div>
+
+        <div class="toggle-link">
+          New here?
+          <button type="button" onclick="showRegister()">Create an account</button>
+        </div>
+
+        <p class="hint">
+          Demo accounts &nbsp;(password: <strong>1234</strong>)
+          <span style="display:table;margin:0.5rem auto 0;text-align:left;border-spacing:0 3px;">
+            <span style="display:table-row;">
+              <span style="display:table-cell;color:#7dd3fc;font-weight:600;padding-right:0.8rem;vertical-align:top;">USER</span>
+              <span style="display:table-cell;">
+                user1@test.com<br/>
+                user2@test.com<br/>
+                user3@test.com
+              </span>
+            </span>
+            <span style="display:table-row;">
+              <span style="display:table-cell;color:#c084fc;font-weight:600;padding-right:0.8rem;padding-top:4px;">USER_PRO</span>
+              <span style="display:table-cell;padding-top:4px;">userpro@test.com</span>
+            </span>
+            <span style="display:table-row;">
+              <span style="display:table-cell;color:#4ade80;font-weight:600;padding-right:0.8rem;padding-top:4px;">ADMIN</span>
+              <span style="display:table-cell;padding-top:4px;">admin@test.com</span>
+            </span>
+          </span>
+        </p>
+      </div>
+
+      <!-- ══════════════════════════════════════════════
+           REGISTER PANEL
+      ══════════════════════════════════════════════ -->
+      <div id="register-panel" class="auth-panel hidden">
+        <p class="subtitle">Create a new account</p>
+        <form id="register-form" autocomplete="off">
+          <label for="reg-name">Full Name</label>
+          <input type="text" id="reg-name" placeholder="e.g. Rahul Sharma"
+                 required autocomplete="name" />
+
+          <label for="reg-email">Email</label>
+          <input type="email" id="reg-email" placeholder="you@example.com"
+                 required autocomplete="email" />
+
+          <label for="reg-password">Password</label>
+          <input type="password" id="reg-password" placeholder="••••••"
+                 required autocomplete="new-password" minlength="4" />
+
+          <!-- Role is always USER — not shown to the user -->
+          <button type="submit" id="register-btn">Create Account</button>
+        </form>
+
+        <div class="divider">or</div>
+
+        <div class="toggle-link">
+          Already have an account?
+          <button type="button" onclick="showLogin()">Sign in</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+  <script>
+    setupNav();
+    // ── Panel toggle ─────────────────────────────────────────────
+    function showRegister() {
+      clearMessages();
+      document.getElementById('login-panel').classList.add('hidden');
+      document.getElementById('register-panel').classList.remove('hidden');
+    }
+
+    function showLogin() {
+      clearMessages();
+      document.getElementById('register-panel').classList.add('hidden');
+      document.getElementById('login-panel').classList.remove('hidden');
+    }
+
+    function clearMessages() {
+      const e = document.getElementById('error-msg');
+      const s = document.getElementById('success-msg');
+      e.classList.add('hidden'); e.textContent = '';
+      s.classList.add('hidden'); s.textContent = '';
+    }
+
+    // ── Registration handler ─────────────────────────────────────
+    document.getElementById('register-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      clearMessages();
+
+      const btn = document.getElementById('register-btn');
+      btn.disabled = true;
+      btn.textContent = 'Creating…';
+
+      const payload = {
+        name:     document.getElementById('reg-name').value.trim(),
+        email:    document.getElementById('reg-email').value.trim(),
+        password: document.getElementById('reg-password').value,
+        role:     'USER'          // always USER — enforced server-side too
+      };
+
+      try {
+        const res  = await fetch('/api/auth/register', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify(payload)
+        });
+        const text = await res.text();
+
+        if (!res.ok || text.toLowerCase().includes('exists')) {
+          showError(text || 'Registration failed.');
+        } else {
+          // Success — show message, then flip back to login after 1.5s
+          showSuccess('✅ Account created! Redirecting to login…');
+          document.getElementById('register-form').reset();
+          setTimeout(() => {
+            showLogin();
+            // Pre-fill email on the login form for convenience
+            document.getElementById('login-email').value = payload.email;
+          }, 1500);
+        }
+      } catch (err) {
+        showError('Could not connect to server.');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Create Account';
+      }
+    });
+
+    // ── Helpers ──────────────────────────────────────────────────
+    function showError(msg) {
+      const el = document.getElementById('error-msg');
+      el.textContent = msg;
+      el.classList.remove('hidden');
+    }
+
+    function showSuccess(msg) {
+      const el = document.getElementById('success-msg');
+      el.textContent = msg;
+      el.classList.remove('hidden');
+    }
+  </script>
+</body>
+</html>

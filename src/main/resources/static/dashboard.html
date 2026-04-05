@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard — Finance Dashboard</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <nav>
+    <span class="brand">💰 Finance Dashboard</span>
+    <div class="nav-links">
+      <button id="theme-toggle-btn" class="theme-toggle" onclick="toggleTheme()"></button>
+      <span id="nav-role-badge" class="role-badge"></span>
+      <a id="nav-transactions" href="transactions.html" class="hidden">Transactions</a>
+      <a id="nav-admin" href="admin.html" class="hidden">Admin Panel</a>
+      <a href="#" onclick="logout()">Logout</a>
+    </div>
+  </nav>
+
+  <div class="page-content">
+    <h2>Dashboard</h2>
+    <p id="welcome-msg" class="subtitle"></p>
+
+    <!-- Personal Summary (Only for USER_PRO and ADMIN) -->
+    <div id="summary-section" class="hidden">
+      <p class="section-title">Your Summary</p>
+      <div class="summary-grid" id="personal-summary">
+        <div class="summary-card income">
+          <div class="summary-label">Total Income</div>
+          <div class="summary-value" id="total-income">—</div>
+        </div>
+        <div class="summary-card expense">
+          <div class="summary-label">Total Expense</div>
+          <div class="summary-value" id="total-expense">—</div>
+        </div>
+        <div class="summary-card balance">
+          <div class="summary-label">Balance</div>
+          <div class="summary-value" id="balance">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notice for non-PRO users -->
+    <div id="user-notice" class="hidden" style="margin-top:2rem; padding:1.5rem; background:#1e293b; border-radius:12px; border:1px solid #334155;">
+      <p style="color:#94a3b8; font-size:0.95rem;">
+        You are currently on a standard <strong>USER</strong> account. <br/><br/>
+        Financial summaries are only available for <strong>USER_PRO</strong> members. 
+        Please navigate to your <strong>Transactions</strong> to manage your history.
+      </p>
+      <a href="transactions.html" class="btn" style="display:inline-block; margin-top:1rem; text-decoration:none;">View Transactions</a>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+  <script>
+    const user = getUser();
+    if (!user) location.href = 'index.html';
+
+    setupNav('dashboard');
+    document.getElementById('welcome-msg').textContent = `Welcome back, ${user.email}`;
+
+    // ── Role-based UI visibility ───────────────────────────────
+    if (user.role === 'USER_PRO' || user.role === 'ADMIN') {
+      document.getElementById('summary-section').classList.remove('hidden');
+      loadPersonalDashboard();
+    } else {
+      document.getElementById('user-notice').classList.remove('hidden');
+    }
+
+    async function loadPersonalDashboard() {
+      try {
+        const [income, expense, balance] = await Promise.all([
+          fetch('/api/dashboard/total-income', { headers: authHeaders() }).then(r => r.json()),
+          fetch('/api/dashboard/total-expense', { headers: authHeaders() }).then(r => r.json()),
+          fetch('/api/dashboard/balance',       { headers: authHeaders() }).then(r => r.json())
+        ]);
+        document.getElementById('total-income').textContent  = '₹' + Number(income).toFixed(2);
+        document.getElementById('total-expense').textContent = '₹' + Number(expense).toFixed(2);
+        document.getElementById('balance').textContent       = '₹' + Number(balance).toFixed(2);
+      } catch (e) {
+        console.error('Failed to load personal dashboard', e);
+      }
+    }
+  </script>
+</body>
+</html>

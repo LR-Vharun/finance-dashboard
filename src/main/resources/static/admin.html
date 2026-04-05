@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Panel — Finance Dashboard</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <nav>
+    <span class="brand">💰 Finance Dashboard</span>
+    <div class="nav-links">
+      <button id="theme-toggle-btn" class="theme-toggle" onclick="toggleTheme()"></button>
+      <span id="nav-role-badge" class="role-badge"></span>
+      <a href="dashboard.html">Dashboard</a>
+      <a id="nav-admin" href="admin.html" class="hidden">Admin Panel</a>
+      <a href="#" onclick="logout()">Logout</a>
+    </div>
+  </nav>
+
+  <div class="page-content">
+    <h2>Admin Panel</h2>
+    <p class="subtitle">Search users, view their data, and manage roles.</p>
+
+    <!-- Search Bar -->
+    <p class="section-title">🔍 Search User by ID</p>
+    <div class="search-bar">
+      <div>
+        <label for="search-id">User ID</label>
+        <input type="number" id="search-id" placeholder="e.g. 1" min="1" />
+      </div>
+      <button id="search-btn" onclick="searchUser()">Search</button>
+    </div>
+
+    <!-- User Detail Result -->
+    <div id="user-detail" class="hidden">
+      <div class="user-detail-card">
+        <div class="user-meta">
+          <div class="meta-item"><span>User ID</span><strong id="d-id"></strong></div>
+          <div class="meta-item"><span>Email</span><strong id="d-email"></strong></div>
+          <div class="meta-item">
+            <span>Role</span>
+            <span id="d-role-badge" class="role-badge"></span>
+          </div>
+        </div>
+
+        <!-- Financials -->
+        <div class="summary-grid" style="margin-top:0.5rem;">
+          <div class="summary-card income">
+            <div class="summary-label">Total Income</div>
+            <div class="summary-value" id="d-income">—</div>
+          </div>
+          <div class="summary-card expense">
+            <div class="summary-label">Total Expense</div>
+            <div class="summary-value" id="d-expense">—</div>
+          </div>
+          <div class="summary-card balance">
+            <div class="summary-label">Balance</div>
+            <div class="summary-value" id="d-balance">—</div>
+          </div>
+        </div>
+
+        <!-- Role Management -->
+        <p class="section-title" style="margin-top:1.25rem;">Change Role</p>
+        <div class="role-controls">
+          <select id="role-select">
+            <option value="USER">USER</option>
+            <option value="USER_PRO">USER_PRO</option>
+          </select>
+          <button class="btn-success btn-sm" onclick="updateRole()">Update Role</button>
+        </div>
+        <p style="font-size:0.75rem;color:#475569;margin-top:0.4rem;">⚠️ ADMIN accounts are protected and cannot be changed.</p>
+        <div id="role-msg" class="hidden" style="margin-top:0.75rem;"></div>
+
+        <!-- Transactions Table -->
+        <p class="section-title" style="margin-top:1.25rem;">Transactions</p>
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th><th>Amount</th><th>Type</th><th>Description</th><th>Date</th><th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="d-txn-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- All Users Table -->
+    <p class="section-title" style="margin-top:2rem;">All Registered Users</p>
+    <table id="users-table">
+      <thead>
+        <tr>
+          <th>ID</th><th>Name</th><th>Email</th><th>Role</th><th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="users-body"></tbody>
+    </table>
+  </div>
+
+  <script src="script.js"></script>
+  <script>
+    const user = getUser();
+    if (!user || user.role !== 'ADMIN') {
+      alert('Access denied. Admins only.');
+      location.href = user ? 'dashboard.html' : 'index.html';
+    }
+
+    setupNav('admin');
+
+    let currentSearchId = null;
+
+    // ── Load all users ───────────────────────────────────────────────
+    async function loadAllUsers() {
+      const res  = await fetch('/api/admin/users', { headers: authHeaders() });
+      const data = await res.json();
+      const tbody = document.getElementById('users-body');
+      tbody.innerHTML = '';
+      if (!Array.isArray(data) || !data.length) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#475569;">No users found.</td></tr>';
+        return;
+      }
+      data.forEach(u => {
+        tbody.innerHTML += `
+          <tr>
+            <td>${u.id}</td>
+            <td>${u.name || '—'}</td>
+            <td>${u.email}</td>
+            <td><span class="role-badge ${u.role}">${u.role}</span></td>
+            <td>
+              <button class="btn-secondary btn-sm" onclick="quickSearch(${u.id})">View Details</button>
+            </td>
+          </tr>`;
+      });
+    }
+
+    // ── Search user by ID ────────────────────────────────────────────
+    async function searchUser() {
+      const id = document.getElementById('search-id').value.trim();
+      if (!id) { alert('Please enter a User ID.'); return; }
+      await fetchUserDetail(Number(id));
+    }
+
+    async function quickSearch(id) {
+      document.getElementById('search-id').value = id;
+      await fetchUserDetail(id);
+      document.getElementById('user-detail').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    async function fetchUserDetail(id) {
+      const btn = document.getElementById('search-btn');
+      btn.disabled = true; btn.textContent = 'Searching…';
+      try {
+        const res = await fetch(`/api/admin/users/${id}`, { headers: authHeaders() });
+        if (!res.ok) {
+          const msg = await res.text();
+          alert('User not found: ' + msg);
+          return;
+        }
+        const data = await res.json();
+        currentSearchId = data.userId;
+        renderUserDetail(data);
+        document.getElementById('user-detail').classList.remove('hidden');
+      } catch (e) {
+        alert('Error fetching user: ' + e.message);
+      } finally {
+        btn.disabled = false; btn.textContent = 'Search';
+      }
+    }
+
+    function renderUserDetail(data) {
+      document.getElementById('d-id').textContent      = data.userId;
+      document.getElementById('d-email').textContent   = data.email;
+      document.getElementById('d-income').textContent  = '₹' + Number(data.totalIncome).toFixed(2);
+      document.getElementById('d-expense').textContent = '₹' + Number(data.totalExpense).toFixed(2);
+      document.getElementById('d-balance').textContent = '₹' + Number(data.balance).toFixed(2);
+
+      applyRoleBadge(document.getElementById('d-role-badge'), data.role);
+      document.getElementById('role-select').value = data.role;
+      document.getElementById('role-msg').classList.add('hidden');
+
+      // Lock role controls for ADMIN accounts
+      const roleControls = document.querySelector('.role-controls');
+      const roleHint     = roleControls.nextElementSibling; // the <p> hint
+      if (data.role === 'ADMIN') {
+        roleControls.classList.add('hidden');
+        roleHint.textContent = '🔒 This is an ADMIN account. Role cannot be changed.';
+        roleHint.style.color = '#f87171';
+      } else {
+        roleControls.classList.remove('hidden');
+        roleHint.textContent = '⚠️ ADMIN accounts are protected and cannot be changed.';
+        roleHint.style.color = '#475569';
+      }
+
+      const tbody = document.getElementById('d-txn-body');
+      tbody.innerHTML = '';
+      if (!data.transactions || !data.transactions.length) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#475569;">No transactions.</td></tr>';
+      } else {
+        data.transactions.forEach(t => {
+          tbody.innerHTML += `
+            <tr>
+              <td>${t.id}</td>
+              <td>₹${Number(t.amount).toFixed(2)}</td>
+              <td><span class="badge ${t.type.toLowerCase()}">${t.type}</span></td>
+              <td>${t.description || '—'}</td>
+              <td>${t.date}</td>
+              <td><button class="btn-delete btn-sm" onclick="deleteTxn(${t.id})">Delete</button></td>
+            </tr>`;
+        });
+      }
+    }
+
+    async function deleteTxn(id) {
+      if (!confirm('Delete this transaction?')) return;
+      const res = await fetch(`/api/transactions/${id}`, { method: 'DELETE', headers: authHeaders() });
+      if (res.ok) {
+        fetchUserDetail(currentSearchId); // Refresh details view
+      } else {
+        alert('Failed to delete transaction.');
+      }
+    }
+
+    // ── Update role ──────────────────────────────────────────────────
+    async function updateRole() {
+      if (!currentSearchId) { alert('Search for a user first.'); return; }
+      const newRole = document.getElementById('role-select').value;
+      const msgEl   = document.getElementById('role-msg');
+      try {
+        const res = await fetch(`/api/admin/users/${currentSearchId}/role`, {
+          method:  'PUT',
+          headers: authHeaders(),
+          body:    JSON.stringify({ role: newRole })
+        });
+        if (res.ok) {
+          msgEl.textContent = `✅ Role updated to ${newRole} successfully.`;
+          msgEl.className   = 'success';
+          msgEl.classList.remove('hidden');
+          applyRoleBadge(document.getElementById('d-role-badge'), newRole);
+          loadAllUsers(); // refresh the users table
+        } else {
+          const err = await res.text();
+          msgEl.textContent = '❌ ' + err;
+          msgEl.className   = 'error';
+          msgEl.classList.remove('hidden');
+        }
+      } catch (e) {
+        msgEl.textContent = '❌ Network error: ' + e.message;
+        msgEl.className   = 'error';
+        msgEl.classList.remove('hidden');
+      }
+    }
+
+    loadAllUsers();
+  </script>
+</body>
+</html>
