@@ -5,29 +5,19 @@
 #  Usage: ./start.sh
 # ================================================================
 
-echo "🔍 Checking MySQL status..."
+echo "🔍 Checking MySQL connectivity on port 3306..."
 
-# Check if MySQL is active
-if systemctl is-active --quiet mysql; then
-  echo "✅ MySQL is already running."
+# Function to check if port 3306 is open
+is_port_open() {
+  (echo > /dev/tcp/localhost/3306) >/dev/null 2>&1
+}
+
+if is_port_open; then
+    echo "✅ MySQL is reachable."
 else
-  echo "⚡ MySQL is not running. Starting MySQL..."
-  sudo systemctl start mysql
-
-  # Wait up to 15 seconds for MySQL to be ready
-  MAX_WAIT=15
-  WAITED=0
-  while ! systemctl is-active --quiet mysql; do
-    if [ "$WAITED" -ge "$MAX_WAIT" ]; then
-      echo "❌ MySQL failed to start after ${MAX_WAIT}s. Please check: sudo systemctl status mysql"
-      exit 1
-    fi
-    echo "   Waiting for MySQL... (${WAITED}s)"
-    sleep 1
-    WAITED=$((WAITED + 1))
-  done
-
-  echo "✅ MySQL started successfully."
+    echo "⏳ MySQL is not reachable on port 3306."
+    echo "   Please ensure MySQL is running and the 'finance_db' database is created."
+    echo "   (Trying to start anyway...)"
 fi
 
 echo ""
@@ -37,4 +27,5 @@ echo ""
 
 # Run the Spring Boot application
 cd "$(dirname "$0")" || exit 1
+chmod +x mvnw
 ./mvnw spring-boot:run

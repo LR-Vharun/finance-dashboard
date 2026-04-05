@@ -4,22 +4,17 @@
 ::  Ensures MySQL is running before launching the Spring Boot app.
 :: ================================================================
 
-echo 🔍 Checking MySQL status...
+echo 🔍 Checking MySQL connectivity on port 3306...
 
-:: Check if the MySQL service is running
-net start | findstr /i "MySQL" > nul
+:: Use PowerShell to check port 3306
+powershell -Command "try { $c = New-Object System.Net.Sockets.TcpClient('localhost', 3306); if ($c.Connected) { exit 0 } } catch { exit 1 }"
+
 if %errorlevel% == 0 (
-    echo ✅ MySQL service is already running.
+    echo ✅ MySQL is reachable.
 ) else (
-    echo ⚡ MySQL is not running. Attempting to start...
-    :: Needs Administrator privileges to start services
-    net start MySQL
-    if %errorlevel% neq 0 (
-        echo ❌ Could not start MySQL automatically. 
-        echo    Please start it manually via 'Services' or run this script as Admin.
-    ) else (
-        echo ✅ MySQL started successfully.
-    )
+    echo ⏳ MySQL is not reachable on port 3306.
+    echo    Please ensure MySQL is running and the 'finance_db' database is created.
+    echo    (Trying to start anyway...)
 )
 
 echo.

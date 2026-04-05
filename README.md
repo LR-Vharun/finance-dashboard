@@ -17,13 +17,14 @@ Every time the application starts for the first time on a new PC:
 ### 1. Prerequisites
 - **Java 21** and **Maven** installed.
 - **MySQL** installed and running.
-- **Note on Lombok**: If you are using an IDE (like VS Code or IntelliJ), please ensure the **Lombok extension/plugin** is installed to avoid errors in the editor. (Not required just to run the application).
+- **Note on Lombok**: If you are using an IDE (like VS Code or IntelliJ), please ensure the **Lombok extension/plugin** is installed to avoid errors in the editor. (Not required just to run the application through terminal).
 
 ### 2. Prepare the Database
-Run this single command in your MySQL console:
-```sql
-CREATE DATABASE finance_db;
-```
+1.  Run this single command in your MySQL console:
+    ```sql
+    CREATE DATABASE finance_db;
+    ```
+2.  **Credentials**: By default, the app connects using **username: root** and **no password**. If your setup is different, please update the credentials in `src/main/resources/application.properties`.
 
 ### 3. Start the Application
 Use the provided automation scripts to simplify the startup process:
